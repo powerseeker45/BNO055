@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "bno055_stm32.h"
+#include "BNO055_STM32.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,8 +44,8 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-bno055_vector_t v;
-bno055_vector_t q;
+BNO055_Sensors_t BNO055;	/*!BNO055 data structure definition which hold euler, quaternion, linearaccel, gyro etc. parameters*/
+uint8_t OffsetDatas[22];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -54,7 +54,7 @@ static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void Sensor_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -82,9 +82,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  bno055_assignI2C(&hi2c1);
-  bno055_setup();
-  bno055_setOperationModeNDOF();
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -98,19 +96,17 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  Sensor_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  ReadData(&BNO055, SENSOR_EULER|SENSOR_ACCEL|SENSOR_GYRO);
+
     /* USER CODE END WHILE */
-	  v = bno055_getVectorEuler();
-	  //printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
-	  q = bno055_getVectorQuaternion();
-	  //printf("W: %.2f X: %.2f Y: %.2f Z: %.2f\r\n", v.w, v.x, v.y, v.z);
-	  HAL_Delay(1000);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -233,7 +229,52 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void Sensor_Init(void)
+{
+	BNO_Status_t Status = {0};
 
+	//Init structure definition section
+	BNO055_Init_t BNO055_InitStruct = {0};
+
+	//Reset section
+	ResetBNO055();
+
+	/*============================ *BNO055 Initialization* ============================*/
+
+	BNO055_InitStruct.ACC_Range = Range_16G;			//Range_X
+	BNO055_InitStruct.Axis = DEFAULT_AXIS_REMAP;			//value will be entered by looking at the data sheet
+	BNO055_InitStruct.Axis_sign = DEFAULT_AXIS_SIGN;		//value will be entered by looking at the data sheet
+	BNO055_InitStruct.Clock_Source = CLOCK_EXTERNAL;		//CLOCK_EXTERNAL or CLOCK_INTERNAL
+	BNO055_InitStruct.Mode = BNO055_NORMAL_MODE;			//BNO055_X_MODE   X:NORMAL, LOWPOWER, SUSPEND
+	BNO055_InitStruct.OP_Modes = NDOF;
+	BNO055_InitStruct.Unit_Sel = (UNIT_ORI_ANDROID | UNIT_TEMP_CELCIUS | UNIT_EUL_DEG | UNIT_GYRO_DPS | UNIT_ACC_MS2);
+									//(UNIT_ORI_X | UNIT_TEMP_X | UNIT_EUL_X | UNIT_GYRO_X | UNIT_ACC_X)
+	BNO055_Init(BNO055_InitStruct);
+
+	//------------------BNO055 Calibration------------------
+
+	/*This function allows the sensor offset data obtained after BNO055 is calibrated once to be written
+	 *to the registers. In this way, there is no need to calibrate the sensor every time it is powered on.
+	 */
+	//setSensorOffsets(OffsetDatas);
+
+	/*-=-=-=-=-=-=Calibration Part-=-=-=-=-=-=*/
+	if(Calibrate_BNO055())
+	{
+		getSensorOffsets(OffsetDatas);
+		//Buzzer(200, 5);
+	}
+	else
+	{
+		printf("Sensor calibration failed.\nFailed to retrieve offset data\n");
+	}
+
+	Check_Status(&Status);
+	printf("Selftest Result: %d\t",Status.STresult);
+	printf("System Status: %d\t",Status.SYSStatus);
+	printf("System Error: %d\n",Status.SYSError);
+
+}
 /* USER CODE END 4 */
 
  /* MPU Configuration */

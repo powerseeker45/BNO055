@@ -1,10 +1,7 @@
-../Core/Inc/bno055_stm32.h:20:6:bno055_assignI2C	1
-../Core/Inc/bno055_stm32.h:24:6:bno055_delay	1
-../Core/Inc/bno055_stm32.h:32:6:bno055_writeData	21
-../Core/Inc/bno055_stm32.h:96:6:bno055_readData	1
 ../Core/Src/main.c:69:5:main	1
-../Core/Src/main.c:123:6:SystemClock_Config	4
-../Core/Src/main.c:174:13:MX_I2C1_Init	4
-../Core/Src/main.c:222:13:MX_GPIO_Init	1
-../Core/Src/main.c:241:6:MPU_Config	1
-../Core/Src/main.c:272:6:Error_Handler	1
+../Core/Src/main.c:119:6:SystemClock_Config	4
+../Core/Src/main.c:170:13:MX_I2C1_Init	4
+../Core/Src/main.c:218:13:MX_GPIO_Init	1
+../Core/Src/main.c:232:6:Sensor_Init	2
+../Core/Src/main.c:282:6:MPU_Config	1
+../Core/Src/main.c:313:6:Error_Handler	1
